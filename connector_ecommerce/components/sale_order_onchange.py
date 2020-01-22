@@ -27,6 +27,12 @@ class OnChangeManager(Component):
         model = self.env[model]
         onchange_specs = model._onchange_spec()
 
+        # workaround nasty stuff that couldnt find why o2m
+        # eg. order_line.custom_value_ids.* fields are included
+        for key in onchange_specs.keys():
+            if len(key.split('.')) > 2:
+                del onchange_specs[key]
+
         # we need all fields in the dict even the empty ones
         # otherwise 'onchange()' will not apply changes to them
         all_values = values.copy()
