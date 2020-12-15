@@ -26,19 +26,27 @@ class OnChangeManager(Component):
         model = self.env[model]
         onchange_specs = model._onchange_spec()
 
+        all_values = values.copy()
+        model_fields = model._fields
+
+        # Remove the fields that are not in the model's fields
+        # Otherwise an exception is raised by Odoo because of
+        # this check https://git.io/JLk8i
+        model_fields_values = {
+            f:v for f,v in all_values.items() if f in model_fields}
+
         # we need all fields in the dict even the empty ones
         # otherwise 'onchange()' will not apply changes to them
-        all_values = values.copy()
         for field in model._fields:
-            if field not in all_values:
-                all_values[field] = False
+            if field not in model_fields_values:
+                model_fields_values[field] = False
 
         # we work on a temporary record
-        new_record = model.new(all_values)
+        new_record = model.new(model_fields_values)
 
         new_values = {}
         for field in onchange_fields:
-            onchange_values = new_record.onchange(all_values, field, onchange_specs)
+            onchange_values = new_record.onchange(model_fields_values, field, onchange_specs)
             new_values.update(
                 self.get_new_values(values, onchange_values, model=model._name)
             )
